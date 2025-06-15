@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Yönetici Paneli - Araç İşlemleri</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<div class="container py-5">
+    <h2 class="text-center mb-4">🚗 Araç Kiralama Yönetici Paneli</h2>
+    <a href="/AracKiralama/logout" class="btn btn-danger btn-sm">Çıkış Yap</a>
+
+    <!-- Araç Ekleme Formu -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">Yeni Araç Ekle</div>
+        <div class="card-body">
+            <form id="aracForm">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Plaka</label>
+                        <input type="text" class="form-control" name="plaka" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Marka</label>
+                        <input type="text" class="form-control" name="marka" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Model</label>
+                        <input type="text" class="form-control" name="model" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Yakıt Türü</label>
+                        <input type="text" class="form-control" name="yakit" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Vites Türü</label>
+                        <input type="text" class="form-control" name="vites" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Günlük Ücret (₺)</label>
+                        <input type="number" step="0.01" class="form-control" name="ucret" required>
+                    </div>
+                </div>
+                <div class="mt-3 d-flex justify-content-end">
+                    <button type="submit" class="btn btn-success">Aracı Ekle</button>
+                </div>
+                <p class="mt-2 text-success" id="eklemeSonucu"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Araç Listesi -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Mevcut Araçlar</h5>
+            <div>
+                <button class="btn btn-light btn-sm me-2" onclick="araclariListele()">
+                    <i class="bi bi-arrow-clockwise"></i> Yenile
+                </button>
+            </div>
+        </div>
+        <div class="card-body table-responsive">
+            <table class="table table-bordered table-hover align-middle text-center">
+                <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Plaka</th>
+                    <th>Marka</th>
+                    <th>Model</th>
+                    <th>Yakıt</th>
+                    <th>Vites</th>
+                    <th>Ücret (₺)</th>
+                    <th>Durum</th>
+                    <th>İşlem</th>
+                </tr>
+                </thead>
+                <tbody id="aracListesi">
+                <!-- JS ile dinamik olarak dolacak -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+<!-- Kiralama Geçmişi -->
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-gradient bg-primary text-white fw-semibold fs-5">
+        <i class="bi bi-clock-history me-2"></i>Kiralama Geçmişi
+    </div>
+    <div class="card-body p-0">
+        <div class="mb-3">
+            <input type="text" id="aramaInput" class="form-control" placeholder="İsim, plaka veya soyisim ile ara...">
+        </div>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle mb-0" id="gecmisTablo">
+                <thead class="table-light text-center">
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Plaka</th>
+                    <th scope="col">İsim</th>
+                    <th scope="col">Soyisim</th>
+                    <th scope="col">Kiralama Tarihi</th>
+                    <th scope="col">Teslim Tarihi</th>
+                    <th scope="col">Gün</th>
+                    <th scope="col">Toplam Ücret (₺)</th>
+                </tr>
+                </thead>
+                <tbody class="text-center">
+                <!-- JS ile doldurulacak -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Araç ekleme form gönderimi
+    document.getElementById("aracForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const plainData = Object.fromEntries(formData.entries());
+
+        fetch("/AracKiralama/arac", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            body: new URLSearchParams(plainData)
+        })
+            .then(res => res.text())
+            .then(data => {
+                document.getElementById("eklemeSonucu").textContent = data;
+                this.reset();
+                araclariListele();
+            })
+            .catch(err => {
+                document.getElementById("eklemeSonucu").textContent = "Hata: " + err;
+            });
+    });
+
+    // Araçları listele
+    function araclariListele() {
+        fetch("/AracKiralama/arac")
+            .then(res => res.json())
+            .then(data => {
+                let html = "";
+                data.forEach(arac => {
+                    const durum = arac.durum || 'Müsait';
+                    const yeniDurum = durum === 'Kiralık' ? 'Müsait' : 'Kiralık';
+
+                    html += `
+                    <tr>
+                        <td>${arac.id}</td>
+                        <td>${arac.plaka}</td>
+                        <td>${arac.marka}</td>
+                        <td>${arac.model}</td>
+                        <td>${arac.yakit}</td>
+                        <td>${arac.vites}</td>
+                        <td>${arac.ucret}</td>
+                        <td>
+                            <span class="badge bg-${durum === 'Kiralık' ? 'danger' : 'success'}">${durum}</span>
+                        </td>
+                        <td class="d-flex gap-1">
+                            <button class="btn btn-warning btn-sm" onclick="durumDegistir(${arac.id}, '${durum}')">Durumu Değiştir</button>
+                            <button class="btn btn-danger btn-sm" onclick="aracSil(${arac.id})">Sil</button>
+                        </td>
+                    </tr>`;
+                });
+                document.getElementById("aracListesi").innerHTML = html;
+            })
+            .catch(err => {
+                document.getElementById("aracListesi").innerHTML =
+                    "<tr><td colspan='9' class='text-danger text-center'>Hata: " + err + "</td></tr>";
+            });
+    }
+
+
+    // Araç silme işlemi
+    function aracSil(id) {
+        if (confirm("Bu aracı silmek istediğinizden emin misiniz?")) {
+            fetch(`/AracKiralama/arac?id=${id}`, {
+                method: "DELETE"
+            })
+                .then(res => res.text())
+                .then(msg => {
+                    alert(msg);
+                    araclariListele();
+                });
+        }
+    }
+
+    // Sayfa yüklendiğinde araçları getir
+    araclariListele();
+
+
+
+    // Kiralama geçmişini yükle
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const tbody = document.querySelector("#gecmisTablo tbody");
+        const aramaInput = document.getElementById("aramaInput");
+
+        // Kiralama verilerini çek ve tabloya yaz
+        fetch("/AracKiralama/kiralama-gecmisi")
+            .then(response => {
+                if (!response.ok) throw new Error("Ağ hatası");
+                return response.json();
+            })
+            .then(data => {
+                tbody.innerHTML = ""; // Eski verileri temizle
+
+                if (data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">Hiç kiralama kaydı bulunamadı.</td></tr>`;
+                    return;
+                }
+
+                // Tüm kayıtları tabloya yaz
+                data.forEach((kayit, index) => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${kayit.plaka}</td>
+                        <td>${kayit.isim}</td>
+                        <td>${kayit.soyisim}</td>
+                        <td>${kayit.kiralamaTarihi}</td>
+                        <td>${kayit.teslimTarihi}</td>
+                        <td>${kayit.gunSayisi}</td>
+                        <td>${kayit.toplamUcret.toFixed(2)} ₺</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                // Arama filtresi
+                aramaInput.addEventListener("keyup", function () {
+                    const filtre = this.value.toLowerCase();
+                    const satirlar = tbody.querySelectorAll("tr");
+
+                    satirlar.forEach(tr => {
+                        const metin = tr.textContent.toLowerCase();
+                        tr.style.display = metin.includes(filtre) ? "" : "none";
+                    });
+                });
+            })
+            .catch(err => {
+                console.error("Hata:", err);
+                tbody.innerHTML =
+                    `<tr><td colspan="8" class="text-center text-danger">Kiralama geçmişi alınamadı.</td></tr>`;
+            });
+    });
+    function durumDegistir(aracId, mevcutDurum) {
+        const yeniDurum = mevcutDurum === "Kiralık" ? "Müsait" : "Kiralık";
+
+        if (!confirm(`Aracın durumu "${mevcutDurum}" → "${yeniDurum}" olarak güncellensin mi?`)) return;
+
+        fetch("/AracKiralama/arac-durum-guncelle", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `id=${aracId}&durum=${yeniDurum}`
+        })
+            .then(res => res.text())
+            .then(msg => {
+                const alertBox = document.createElement("div");
+                alertBox.className = "alert alert-success alert-dismissible fade show mt-3";
+                alertBox.role = "alert";
+                alertBox.innerHTML = `
+            <strong>Başarılı!</strong> ${msg}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+                document.querySelector(".container").prepend(alertBox);
+
+                araclariListele();
+            })
+            .catch(err => {
+                alert("Hata oluştu: " + err);
+            });
+    }
+
+
+
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</div>
+</body>
+</html>
+
