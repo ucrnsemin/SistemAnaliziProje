@@ -84,6 +84,30 @@
     </div>
 
 
+    <!-- Yeni Admin Ekleme Kartı -->
+    <div class="card mb-4 shadow">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">Yeni Admin Ekle</h5>
+        </div>
+        <div class="card-body">
+            <form id="adminEkleForm">
+                <div class="mb-3">
+                    <label for="kullanici_adi" class="form-label">Kullanıcı Adı</label>
+                    <input type="text" class="form-control" id="kullanici_adi" name="kullanici_adi" required placeholder="admin123">
+                </div>
+                <div class="mb-3">
+                    <label for="sifre" class="form-label">Şifre</label>
+                    <input type="password" class="form-control" id="sifre" name="sifre" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary">Admin Hesabı Oluştur</button>
+                <div id="adminEkleSonuc" class="mt-3 text-success fw-bold"></div>
+            </form>
+        </div>
+    </div>
+
+
+
+
 <!-- Kiralama Geçmişi -->
 <div class="card shadow-sm border-0 mb-4">
     <div class="card-header bg-gradient bg-primary text-white fw-semibold fs-5">
@@ -276,6 +300,32 @@
                 alert("Hata oluştu: " + err);
             });
     }
+
+
+
+
+    // Yeni admin ekleme formu
+
+
+    document.getElementById("adminEkleForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+        const data = new URLSearchParams(new FormData(this));
+
+        fetch("/AracKiralama/admin-ekle", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: data
+        })
+            .then(res => res.text())
+            .then(msg => {
+                document.getElementById("adminEkleSonuc").textContent = msg;
+                this.reset();
+            })
+            .catch(err => {
+                document.getElementById("adminEkleSonuc").textContent = "Bir hata oluştu. Lütfen tekrar deneyin.";
+                console.error("Admin ekleme hatası:", err);
+            });
+    });
 
 
 
