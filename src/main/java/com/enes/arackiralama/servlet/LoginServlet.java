@@ -18,7 +18,7 @@ public class LoginServlet extends HttpServlet {
         String password = request.getParameter("sifre");
 
         try (Connection conn = DBUtil.getConnection()) {
-            String sql = "SELECT rol FROM kullanici WHERE kullanici_adi = ? AND sifre = ?";
+            String sql = "SELECT email, rol FROM kullanici WHERE kullanici_adi = ? AND sifre = ?";
             PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setString(1, username);
             stmt.setString(2, password);
@@ -26,8 +26,13 @@ public class LoginServlet extends HttpServlet {
 
             if (rs.next()) {
                 String role = rs.getString("rol");
+                String email = rs.getString("email");
 
-                // Giriş başarılı → role göre yönlendir
+                // 🔐 Giriş yapan kullanıcı için oturum başlat
+                HttpSession session = request.getSession(true);
+                session.setAttribute("email", email);
+
+                // Role göre yönlendir
                 if ("admin".equalsIgnoreCase(role)) {
                     response.sendRedirect("admin.html");
                 } else {

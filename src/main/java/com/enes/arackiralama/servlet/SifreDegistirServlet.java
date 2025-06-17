@@ -14,10 +14,14 @@ public class SifreDegistirServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // Kullanıcı giriş yapmış mı kontrolü
+        response.setContentType("text/plain");
+        request.setCharacterEncoding("UTF-8");
+        PrintWriter out = response.getWriter();
+
+        // Oturum kontrolü
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("email") == null) {
-            response.getWriter().println("Giriş yapmadan şifre değiştiremezsiniz.");
+            out.println("Şifre değiştirmek için giriş yapmalısınız.");
             return;
         }
 
@@ -26,6 +30,7 @@ public class SifreDegistirServlet extends HttpServlet {
         String yeniSifre = request.getParameter("yeniSifre");
 
         try (Connection conn = DBUtil.getConnection()) {
+            // Eski şifreyi doğrula
             String kontrolSQL = "SELECT * FROM kullanici WHERE email = ? AND sifre = ?";
             PreparedStatement kontrolStmt = conn.prepareStatement(kontrolSQL);
             kontrolStmt.setString(1, email);
@@ -33,19 +38,22 @@ public class SifreDegistirServlet extends HttpServlet {
             ResultSet rs = kontrolStmt.executeQuery();
 
             if (rs.next()) {
+                // Yeni şifreyi güncelle
                 String guncelleSQL = "UPDATE kullanici SET sifre = ? WHERE email = ?";
                 PreparedStatement updateStmt = conn.prepareStatement(guncelleSQL);
                 updateStmt.setString(1, yeniSifre);
                 updateStmt.setString(2, email);
                 updateStmt.executeUpdate();
-                response.getWriter().println("Şifre başarıyla değiştirildi!");
+
+                out.println("Şifre başarıyla değiştirildi.");
             } else {
-                response.getWriter().println("Mevcut şifre yanlış!");
+                out.println("Eski şifre yanlış!");
             }
 
         } catch (SQLException e) {
             e.printStackTrace();
-            response.getWriter().println("Veritabanı hatası: " + e.getMessage());
+            response.setStatus(500);
+            out.println("Veritabanı hatası: " + e.getMessage());
         }
     }
 }
