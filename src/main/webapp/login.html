@@ -35,28 +35,29 @@
 <script>
     document.getElementById("loginForm").addEventListener("submit", function (e) {
         e.preventDefault();
-        const formData = new URLSearchParams(new FormData(this));
+
+        const kullaniciAdi = document.getElementById("kullanici_adi").value;
+        const sifre = document.getElementById("sifre").value;
 
         fetch("/AracKiralama/login", {
             method: "POST",
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded"
             },
-            body: formData
+            body: new URLSearchParams({
+                kullanici_adi: kullaniciAdi,
+                sifre: sifre
+            })
         })
             .then(res => res.text())
-            .then(text => {
-                if (text.includes("Geçersiz kullanıcı adı veya şifre")) {
-                    const alert = document.getElementById("girisHatasi");
-                    alert.textContent = text;
-                    alert.classList.remove("d-none");
+            .then(data => {
+                if (data.endsWith(".html")) {
+                    window.location.href = data; // Başarılı girişte yönlendir
                 } else {
-                    window.location.href = text; // örneğin "kullanici.html" veya "admin.html"
+                    const alertBox = document.getElementById("girisHatasi");
+                    alertBox.classList.remove("d-none");
+                    alertBox.textContent = data;
                 }
-            })
-            .catch(err => {
-                document.getElementById("girisHatasi").textContent = "Sunucu hatası: " + err;
-                document.getElementById("girisHatasi").classList.remove("d-none");
             });
     });
 </script>
