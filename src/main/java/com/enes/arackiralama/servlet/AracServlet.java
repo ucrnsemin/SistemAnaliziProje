@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 @WebServlet("/arac")
@@ -22,7 +23,6 @@ public class AracServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // 1. Formdan gelen verileri al
         String plaka = request.getParameter("plaka");
         String marka = request.getParameter("marka");
         String model = request.getParameter("model");
@@ -30,13 +30,11 @@ public class AracServlet extends HttpServlet {
         String vites = request.getParameter("vites");
         double ucret = Double.parseDouble(request.getParameter("ucret"));
 
-        // 2. Arac nesnesi oluştur
         Arac arac = new Arac(plaka, marka, model, yakit, vites, ucret);
 
         response.setContentType("text/plain");
         PrintWriter out = response.getWriter();
 
-        // 3. Veritabanına ekle
         try (Connection conn = DBUtil.getConnection()) {
             String sql = "INSERT INTO arac (plaka, marka, model, yakit_turu, vites_turu, gunluk_ucret) VALUES (?, ?, ?, ?, ?, ?)";
             PreparedStatement stmt = conn.prepareStatement(sql);
@@ -70,7 +68,7 @@ public class AracServlet extends HttpServlet {
         try (Connection conn = DBUtil.getConnection()) {
             String sql = "SELECT * FROM arac";
             PreparedStatement stmt = conn.prepareStatement(sql);
-            var rs = stmt.executeQuery();
+            ResultSet rs = stmt.executeQuery();
 
             out.print("[");
             boolean first = true;
@@ -85,11 +83,9 @@ public class AracServlet extends HttpServlet {
                 out.print("\"yakit\":\"" + rs.getString("yakit_turu") + "\",");
                 out.print("\"vites\":\"" + rs.getString("vites_turu") + "\",");
                 out.print("\"ucret\":" + rs.getDouble("gunluk_ucret") + ",");
-
                 String durum = rs.getString("durum");
                 if (durum == null) durum = "Müsait";
                 out.print("\"durum\":\"" + durum + "\"");
-
                 out.print("}");
                 first = false;
             }
@@ -114,6 +110,18 @@ public class AracServlet extends HttpServlet {
         }
 
         try (Connection conn = DBUtil.getConnection()) {
+            // Aracın kiralama geçmişi var mı kontrolü
+            String kontrolSQL = "SELECT 1 FROM kiralama WHERE arac_id = ?";
+            PreparedStatement kontrolStmt = conn.prepareStatement(kontrolSQL);
+            kontrolStmt.setInt(1, Integer.parseInt(idStr));
+            ResultSet rs = kontrolStmt.executeQuery();
+
+            if (rs.next()) {
+                response.setStatus(400);
+                response.getWriter().println("Bu araç silinemez, çünkü kiralama geçmişi bulunuyor.");
+                return;
+            }
+
             String sql = "DELETE FROM arac WHERE id = ?";
             PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setInt(1, Integer.parseInt(idStr));
@@ -174,6 +182,4 @@ public class AracServlet extends HttpServlet {
             response.getWriter().println("Güncelleme hatası: " + e.getMessage());
         }
     }
-
-
 }
