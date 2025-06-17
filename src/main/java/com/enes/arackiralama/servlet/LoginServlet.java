@@ -6,6 +6,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.sql.*;
 
 @WebServlet("/login")
@@ -16,6 +17,9 @@ public class LoginServlet extends HttpServlet {
 
         String username = request.getParameter("kullanici_adi");
         String password = request.getParameter("sifre");
+
+        response.setContentType("text/plain");
+        PrintWriter out = response.getWriter();
 
         try (Connection conn = DBUtil.getConnection()) {
             String sql = "SELECT email, rol FROM kullanici WHERE kullanici_adi = ? AND sifre = ?";
@@ -28,27 +32,25 @@ public class LoginServlet extends HttpServlet {
                 String role = rs.getString("rol");
                 String email = rs.getString("email");
 
-                // 🔐 Giriş yapan kullanıcı için oturum başlat
+                // Oturum başlat
                 HttpSession session = request.getSession(true);
                 session.setAttribute("email", email);
+                session.setAttribute("kullanici_adi", username);
+                session.setAttribute("rol", role);
 
-                // Role göre yönlendir
+                // Giriş başarılıysa yönlendirilecek sayfa adını gönderiyoruz
                 if ("admin".equalsIgnoreCase(role)) {
-                    response.sendRedirect("admin.html");
+                    out.print("admin.html");
                 } else {
-                    response.sendRedirect("kullanici.html");
+                    out.print("kullanici.html");
                 }
-
             } else {
-                // Hatalı giriş
-                response.setContentType("text/plain");
-                response.getWriter().println("Geçersiz kullanıcı adı veya şifre.");
+                out.print("Geçersiz kullanıcı adı veya şifre");
             }
 
         } catch (SQLException e) {
             e.printStackTrace();
-            response.setContentType("text/plain");
-            response.getWriter().println("Giriş sırasında hata: " + e.getMessage());
+            out.print("Giriş sırasında hata: " + e.getMessage());
         }
     }
 }
