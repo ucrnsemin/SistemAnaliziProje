@@ -7,8 +7,7 @@ import jakarta.servlet.http.*;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
+import java.sql.*;
 
 @WebServlet("/register")
 public class RegisterServlet extends HttpServlet {
@@ -18,14 +17,16 @@ public class RegisterServlet extends HttpServlet {
 
         String kullaniciAdi = request.getParameter("kullanici_adi");
         String sifre = request.getParameter("sifre");
-        String rol = "user"; // 👈 kullanıcıya rol seçtirmiyoruz, doğrudan "user"
+        String email = request.getParameter("email");
+        String rol = "user"; // default user rolü
 
         try (Connection conn = DBUtil.getConnection()) {
-            String sql = "INSERT INTO kullanici (kullanici_adi, sifre, rol) VALUES (?, ?, ?)";
+            String sql = "INSERT INTO kullanici (kullanici_adi, sifre, email, rol) VALUES (?, ?, ?, ?)";
             PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setString(1, kullaniciAdi);
             stmt.setString(2, sifre);
-            stmt.setString(3, rol);
+            stmt.setString(3, email);
+            stmt.setString(4, rol);
             stmt.executeUpdate();
 
             // Kayıt başarılıysa login sayfasına yönlendir
