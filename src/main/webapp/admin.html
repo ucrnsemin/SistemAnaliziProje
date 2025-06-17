@@ -95,10 +95,17 @@
                     <label for="kullanici_adi" class="form-label">Kullanıcı Adı</label>
                     <input type="text" class="form-control" id="kullanici_adi" name="kullanici_adi" required placeholder="admin123">
                 </div>
+
+                <div class="mb-3">
+                    <label for="email" class="form-label">E-posta</label>
+                    <input type="email" class="form-control" id="email" name="email" required placeholder="admin@example.com">
+                </div>
+
                 <div class="mb-3">
                     <label for="sifre" class="form-label">Şifre</label>
                     <input type="password" class="form-control" id="sifre" name="sifre" required placeholder="••••••••">
                 </div>
+
                 <button type="submit" class="btn btn-primary">Admin Hesabı Oluştur</button>
                 <div id="adminEkleSonuc" class="mt-3 text-success fw-bold"></div>
             </form>
@@ -108,7 +115,7 @@
 
 
 
-<!-- Kiralama Geçmişi -->
+    <!-- Kiralama Geçmişi -->
 <div class="card shadow-sm border-0 mb-4">
     <div class="card-header bg-gradient bg-primary text-white fw-semibold fs-5">
         <i class="bi bi-clock-history me-2"></i>Kiralama Geçmişi
@@ -305,8 +312,6 @@
 
 
     // Yeni admin ekleme formu
-
-
     document.getElementById("adminEkleForm").addEventListener("submit", function (e) {
         e.preventDefault();
         const data = new URLSearchParams(new FormData(this));
@@ -326,7 +331,6 @@
                 console.error("Admin ekleme hatası:", err);
             });
     });
-
 
 
 </script>
